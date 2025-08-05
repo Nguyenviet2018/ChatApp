@@ -72,8 +72,10 @@ export class MemStorage implements IStorage {
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
     const id = randomUUID();
     const message: Message = {
-      ...insertMessage,
       id,
+      content: insertMessage.content,
+      username: insertMessage.username,
+      userId: insertMessage.userId || null,
       timestamp: new Date()
     };
     this.messages.set(id, message);

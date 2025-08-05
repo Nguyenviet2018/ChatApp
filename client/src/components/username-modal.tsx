@@ -22,7 +22,7 @@ export function UsernameModal({ isOpen, onSubmit, error }: UsernameModalProps) {
 
   return (
     <Dialog open={isOpen}>
-      <DialogContent className="sm:max-w-md" hideClose>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center">Welcome to Tao Chat</DialogTitle>
         </DialogHeader>
