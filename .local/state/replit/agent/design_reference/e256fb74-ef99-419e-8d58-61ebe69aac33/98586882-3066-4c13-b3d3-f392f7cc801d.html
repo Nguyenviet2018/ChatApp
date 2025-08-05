@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tao Chat - Real-time Chat Room</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#10B981',
+                        surface: '#FFFFFF',
+                        background: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="font-inter bg-background h-screen overflow-hidden">
+    <!-- @COMPONENT: ChatApp [main application container] -->
+    <div class="flex h-screen">
+        <!-- Mobile Menu Toggle -->
+        <div class="lg:hidden fixed top-4 left-4 z-50">
+            <button id="menuToggle" class="bg-white rounded-lg p-2 shadow-md border">
+                <i class="fas fa-bars text-gray-600"></i>
+            </button>
+        </div>
+
+        <!-- Users Sidebar -->
+        <!-- @COMPONENT: UsersSidebar [active users list and connection status] -->
+        <div id="usersSidebar" class="w-64 bg-white border-r border-gray-200 flex-shrink-0 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out fixed lg:relative h-full z-40">
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-secondary rounded-full"></div>
+                    <h2 class="font-semibold text-gray-800">Tao Chat</h2>
+                </div>
+                <p class="text-sm text-gray-500 mt-1" data-bind="connectionStatus">Connected</p>
+            </div>
+            
+            <div class="p-4">
+                <h3 class="text-sm font-medium text-gray-700 mb-3">Active Users (<span data-bind="activeUserCount">4</span>)</h3>
+                
+                <!-- @MAP: activeUsers.map(user => ( -->
+                <div class="space-y-2">
+                    <div class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50" data-mock="true">
+                        <div class="relative">
+                            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                A
+                            </div>
+                            <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-secondary border-2 border-white rounded-full"></div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800" data-bind="user.username">Alice</p>
+                            <p class="text-xs text-gray-500">Active now</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50" data-mock="true">
+                        <div class="relative">
+                            <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                B
+                            </div>
+                            <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-secondary border-2 border-white rounded-full"></div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800" data-bind="user.username">Bob</p>
+                            <p class="text-xs text-gray-500">Active now</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50" data-mock="true">
+                        <div class="relative">
+                            <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                C
+                            </div>
+                            <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-secondary border-2 border-white rounded-full"></div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800" data-bind="user.username">Charlie</p>
+                            <p class="text-xs text-gray-500">Active now</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50" data-mock="true">
+                        <div class="relative">
+                            <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                Y
+                            </div>
+                            <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-secondary border-2 border-white rounded-full"></div>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800" data-bind="user.username">You</p>
+                            <p class="text-xs text-gray-500">Active now</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+            </div>
+
+            <!-- Connection Status -->
+            <div class="absolute bottom-4 left-4 right-4">
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+                        <span class="text-xs text-gray-600">Real-time connected</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: UsersSidebar -->
+
+        <!-- Main Chat Area -->
+        <!-- @COMPONENT: ChatArea [main messaging interface] -->
+        <div class="flex-1 flex flex-col bg-white lg:ml-0">
+            <!-- Chat Header -->
+            <div class="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="lg:hidden">
+                        <button id="closeSidebar" class="text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <h1 class="text-lg font-semibold text-gray-800">General Chat</h1>
+                    <div class="flex items-center space-x-1 text-sm text-gray-500">
+                        <i class="fas fa-users text-xs"></i>
+                        <span data-bind="activeUserCount">4</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="hidden sm:flex items-center space-x-2 text-sm text-gray-500">
+                        <div class="w-2 h-2 bg-secondary rounded-full"></div>
+                        <span>Connected</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages Container -->
+            <!-- @STATE: messages:array = [] -->
+            <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4" data-implementation="Auto-scroll to bottom on new messages">
+                <!-- @MAP: messages.map(message => ( -->
+                
+                <!-- Other User Message -->
+                <div class="flex items-start space-x-3" data-mock="true">
+                    <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                        A
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-sm font-medium text-gray-800" data-bind="message.username">Alice</span>
+                            <span class="text-xs text-gray-500" data-bind="message.timestamp">2:34 PM</span>
+                        </div>
+                        <div class="bg-gray-100 rounded-lg p-3 max-w-md">
+                            <p class="text-sm text-gray-800" data-bind="message.content">Hey everyone! Welcome to the chat room 👋</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Own Message -->
+                <div class="flex items-start space-x-3 justify-end" data-mock="true">
+                    <div class="flex-1 flex flex-col items-end">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-xs text-gray-500" data-bind="message.timestamp">2:35 PM</span>
+                            <span class="text-sm font-medium text-gray-800" data-bind="message.username">You</span>
+                        </div>
+                        <div class="bg-primary rounded-lg p-3 max-w-md">
+                            <p class="text-sm text-white" data-bind="message.content">Thanks! Happy to be here. How's everyone doing?</p>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                        Y
+                    </div>
+                </div>
+
+                <!-- Other User Message -->
+                <div class="flex items-start space-x-3" data-mock="true">
+                    <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                        B
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-sm font-medium text-gray-800" data-bind="message.username">Bob</span>
+                            <span class="text-xs text-gray-500" data-bind="message.timestamp">2:36 PM</span>
+                        </div>
+                        <div class="bg-gray-100 rounded-lg p-3 max-w-md">
+                            <p class="text-sm text-gray-800" data-bind="message.content">Doing great! Just finished a project. What about you all?</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Message -->
+                <div class="flex justify-center" data-mock="true">
+                    <div class="bg-gray-50 rounded-full px-3 py-1">
+                        <p class="text-xs text-gray-500" data-bind="systemMessage.content">Charlie joined the chat</p>
+                    </div>
+                </div>
+
+                <!-- Another User Message -->
+                <div class="flex items-start space-x-3" data-mock="true">
+                    <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                        C
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-sm font-medium text-gray-800" data-bind="message.username">Charlie</span>
+                            <span class="text-xs text-gray-500" data-bind="message.timestamp">2:38 PM</span>
+                        </div>
+                        <div class="bg-gray-100 rounded-lg p-3 max-w-md">
+                            <p class="text-sm text-gray-800" data-bind="message.content">Hey everyone! Just joined. What are we talking about?</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Own Message -->
+                <div class="flex items-start space-x-3 justify-end" data-mock="true">
+                    <div class="flex-1 flex flex-col items-end">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-xs text-gray-500" data-bind="message.timestamp">2:39 PM</span>
+                            <span class="text-sm font-medium text-gray-800" data-bind="message.username">You</span>
+                        </div>
+                        <div class="bg-primary rounded-lg p-3 max-w-md">
+                            <p class="text-sm text-white" data-bind="message.content">Welcome Charlie! We were just catching up on our projects 😊</p>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                        Y
+                    </div>
+                </div>
+
+                <!-- Typing Indicator -->
+                <!-- @FUNCTIONALITY: Show when other users are typing -->
+                <div class="flex items-start space-x-3" data-implementation="Show/hide based on typing events" style="display: none;">
+                    <div class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                        ?
+                    </div>
+                    <div class="flex-1">
+                        <div class="bg-gray-100 rounded-lg p-3 max-w-md">
+                            <div class="flex items-center space-x-1">
+                                <div class="flex space-x-1">
+                                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s;"></div>
+                                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                                </div>
+                                <span class="text-xs text-gray-500 ml-2">Someone is typing...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- @END_MAP )) -->
+
+                <!-- Scroll to bottom anchor -->
+                <div id="messagesEnd"></div>
+            </div>
+
+            <!-- Message Input -->
+            <!-- @COMPONENT: MessageInput [compose and send messages] -->
+            <div class="border-t border-gray-200 p-4 bg-white">
+                <form id="messageForm" class="flex items-end space-x-3" data-event="submit:handleSendMessage">
+                    <div class="flex-1">
+                        <div class="relative">
+                            <textarea 
+                                id="messageInput" 
+                                placeholder="Type your message..." 
+                                class="w-full px-4 py-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                rows="1"
+                                data-implementation="Auto-resize based on content, max-height limit"
+                                data-event="keydown:handleKeyPress"
+                            ></textarea>
+                            <!-- Character count for long messages -->
+                            <div class="absolute bottom-2 right-2 text-xs text-gray-400" style="display: none;">
+                                <span id="charCount">0</span>/500
+                            </div>
+                        </div>
+                    </div>
+                    <button 
+                        type="submit" 
+                        class="bg-primary text-white p-3 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        data-implementation="Disable when message is empty or sending"
+                    >
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+
+                <!-- Connection Status for Mobile -->
+                <div class="lg:hidden mt-3 flex items-center justify-center">
+                    <div class="flex items-center space-x-2 text-sm text-gray-500">
+                        <div class="w-2 h-2 bg-secondary rounded-full"></div>
+                        <span data-bind="connectionStatus">Connected to chat</span>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: MessageInput -->
+        </div>
+        <!-- @END_COMPONENT: ChatArea -->
+
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebarOverlay" class="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+    </div>
+    <!-- @END_COMPONENT: ChatApp -->
+
+    <!-- Error Toast -->
+    <!-- @COMPONENT: ErrorToast [connection error notifications] -->
+    <div id="errorToast" class="fixed top-4 right-4 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50" data-implementation="Show on connection errors">
+        <div class="flex items-center space-x-2">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Connection lost. Reconnecting...</span>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: ErrorToast -->
+
+    <script>
+        // TODO: Implement Socket.io integration for real-time communication
+        // TODO: Implement message sending and receiving functionality
+        // TODO: Implement user management and active user tracking
+        // TODO: Implement connection status monitoring
+        // TODO: Implement message history loading for new users
+
+        (function() {
+            // Mobile sidebar toggle functionality
+            const menuToggle = document.getElementById('menuToggle');
+            const usersSidebar = document.getElementById('usersSidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const closeSidebar = document.getElementById('closeSidebar');
+
+            function openSidebar() {
+                usersSidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            }
+
+            function closeSidebarFn() {
+                usersSidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('opacity-0', 'pointer-events-none');
+            }
+
+            menuToggle?.addEventListener('click', openSidebar);
+            closeSidebar?.addEventListener('click', closeSidebarFn);
+            sidebarOverlay?.addEventListener('click', closeSidebarFn);
+
+            // Auto-resize textarea
+            const messageInput = document.getElementById('messageInput');
+            messageInput?.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+
+            // Handle Enter key for sending messages
+            messageInput?.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    // TODO: Send message
+                    console.log('Send message:', this.value);
+                    this.value = '';
+                    this.style.height = 'auto';
+                }
+            });
+
+            // Auto-scroll messages container to bottom
+            const messagesContainer = document.getElementById('messagesContainer');
+            function scrollToBottom() {
+                if (messagesContainer) {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+            }
+
+            // Scroll to bottom on load
+            scrollToBottom();
+
+            // Mock connection status changes
+            let isConnected = true;
+            const errorToast = document.getElementById('errorToast');
+            
+            // Simulate connection issues for demo
+            setInterval(() => {
+                if (Math.random() > 0.95) { // 5% chance every 3 seconds
+                    isConnected = !isConnected;
+                    if (!isConnected) {
+                        errorToast?.classList.remove('translate-x-full');
+                        setTimeout(() => {
+                            errorToast?.classList.add('translate-x-full');
+                            isConnected = true;
+                        }, 3000);
+                    }
+                }
+            }, 3000);
+
+            // Handle form submission
+            const messageForm = document.getElementById('messageForm');
+            messageForm?.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const input = messageInput;
+                if (input && input.value.trim()) {
+                    // TODO: Send message via Socket.io
+                    console.log('Sending message:', input.value);
+                    input.value = '';
+                    input.style.height = 'auto';
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
