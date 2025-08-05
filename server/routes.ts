@@ -29,8 +29,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Socket.io setup
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: process.env.NODE_ENV === "development" ? true : false,
-      credentials: true
+      origin: true,
+      credentials: true,
+      methods: ["GET", "POST"]
     }
   });
 
