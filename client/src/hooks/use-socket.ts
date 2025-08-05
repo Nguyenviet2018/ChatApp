@@ -13,6 +13,7 @@ interface UseSocketReturn extends SocketState {
   sendMessage: (content: string) => void;
   startTyping: () => void;
   stopTyping: () => void;
+  clearMessages: () => void;
 }
 
 export function useSocket(): UseSocketReturn {
@@ -78,11 +79,18 @@ export function useSocket(): UseSocketReturn {
     }
   };
 
+  const clearMessages = () => {
+    if (socketRef.current && state.connected) {
+      socketRef.current.emit("clear_messages");
+    }
+  };
+
   return {
     ...state,
     joinChat,
     sendMessage,
     startTyping,
     stopTyping,
+    clearMessages,
   };
 }

@@ -24,6 +24,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/messages", async (req, res) => {
+    try {
+      await storage.clearAllMessages();
+      res.json({ message: "All messages cleared successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to clear messages" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Socket.io setup
@@ -123,6 +132,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (error) {
         console.error("Error handling message:", error);
         socket.emit("error", { message: "Failed to send message" });
+      }
+    });
+
+    // Handle clear messages
+    socket.on("clear_messages", async () => {
+      try {
+        if (!socket.data.userId || !socket.data.username) {
+          socket.emit("error", { message: "Not authenticated" });
+          return;
+        }
+
+        await storage.clearAllMessages();
+        
+        // Broadcast to all users that messages were cleared
+        io.to("chat").emit("messages_cleared", { username: socket.data.username });
+
+      } catch (error) {
+        console.error("Error clearing messages:", error);
+        socket.emit("error", { message: "Failed to clear messages" });
       }
     });
 

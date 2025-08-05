@@ -14,6 +14,7 @@ export interface IStorage {
   // Message methods
   createMessage(message: InsertMessage): Promise<Message>;
   getRecentMessages(limit?: number): Promise<Message[]>;
+  clearAllMessages(): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -87,6 +88,10 @@ export class MemStorage implements IStorage {
       .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime())
       .slice(-limit);
     return messages;
+  }
+
+  async clearAllMessages(): Promise<void> {
+    this.messages.clear();
   }
 }
 

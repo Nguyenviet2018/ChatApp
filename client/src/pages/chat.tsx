@@ -16,7 +16,7 @@ export default function Chat() {
   const [joinError, setJoinError] = useState<string>("");
 
   const { toast } = useToast();
-  const { socket, connected, error, joinChat, sendMessage, startTyping, stopTyping } = useSocket();
+  const { socket, connected, error, joinChat, sendMessage, startTyping, stopTyping, clearMessages } = useSocket();
 
   useEffect(() => {
     if (!socket) return;
@@ -74,6 +74,15 @@ export default function Chat() {
       });
     });
 
+    // Handle messages cleared
+    socket.on("messages_cleared", (data: { username: string }) => {
+      setMessages([]);
+      toast({
+        title: "Chat cleared",
+        description: `${data.username} đã xóa toàn bộ tin nhắn`,
+      });
+    });
+
     // Handle socket errors
     socket.on("error", (data: { message: string }) => {
       setJoinError(data.message);
@@ -92,6 +101,7 @@ export default function Chat() {
       socket.off("user_joined");
       socket.off("user_left");
       socket.off("user_typing");
+      socket.off("messages_cleared");
       socket.off("error");
     };
   }, [socket, toast]);
@@ -152,6 +162,7 @@ export default function Chat() {
         onToggleSidebar={handleToggleSidebar}
         isSidebarOpen={isSidebarOpen}
         typingUsers={typingUsers.filter(user => user !== currentUser.username)}
+        onClearMessages={clearMessages}
       />
     </div>
   );

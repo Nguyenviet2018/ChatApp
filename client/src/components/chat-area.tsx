@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Menu, Users, X } from "lucide-react";
+import { Menu, Users, X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MessageInput } from "./message-input";
 import type { Message, User } from "@shared/schema";
@@ -15,6 +15,7 @@ interface ChatAreaProps {
   onToggleSidebar: () => void;
   isSidebarOpen: boolean;
   typingUsers: string[];
+  onClearMessages: () => void;
 }
 
 function getUserInitial(username: string): string {
@@ -58,7 +59,8 @@ export function ChatArea({
   onStopTyping,
   onToggleSidebar,
   isSidebarOpen,
-  typingUsers
+  typingUsers,
+  onClearMessages
 }: ChatAreaProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -92,6 +94,18 @@ export function ChatArea({
           </div>
         </div>
         <div className="flex items-center space-x-2">
+          {messages.length >= 5 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onClearMessages}
+              disabled={!isConnected}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Xóa chat
+            </Button>
+          )}
           <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-500">
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
             <span>{isConnected ? 'Connected' : 'Disconnected'}</span>
